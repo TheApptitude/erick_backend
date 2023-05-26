@@ -22,4 +22,5 @@ try {
     next();
 
 }
-module.exports=verifyToken;
+
+export default verifyToken;
