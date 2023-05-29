@@ -4,7 +4,12 @@ import dbConnect  from "./connectivity.js";
 import path from "path";
 
 
+
 import { UserRouters } from "./router/userRouter.js";
+import { TaskRouters } from "./router/taskRouter.js";
+import { subTaskRouters } from "./router/subTaskRouter.js";
+
+
 const app=express();
 
 const api_prifix=process.env.API_PRIFEX;
@@ -20,7 +25,18 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 
+
+//user router
 app.use(api_prifix,UserRouters);
+
+// task router
+
+app.use(api_prifix,TaskRouters);
+
+//sub task router
+
+app.use(api_prifix,subTaskRouters);
+
 
 dbConnect();
 

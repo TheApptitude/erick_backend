@@ -15,7 +15,7 @@ description:{
 
 assignedUsers: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'users',
 }],
 
 subtasks: [{
@@ -23,20 +23,24 @@ subtasks: [{
     ref: 'subtasks',
 }],
 
- day: {
+createdBy:{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'users',
+},
+
+  day: {
     type: String,
     required: true,
   },
 
-  createdAt: {
+  scheduledDateTime: {
     type: Date,
-    default: Date.now,
+    required: true,
   },
+
   
 },
-{
-    timestamps:true
-}
+
 )
 
 const taskModel=mongoose.model("tasks",taskSchema);
