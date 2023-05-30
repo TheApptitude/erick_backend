@@ -6,8 +6,21 @@ import * as taskController from "../controller/taskController.js";
 
 
 //create task router
-TaskRouters.post("/createtask",auth,taskController.createTask);
+TaskRouters.post("/createTask",auth,taskController.createTask);
 
 //get task router
 
-TaskRouters.get("/gettask",auth,taskController.getTask);
+TaskRouters.get("/getTask",auth,taskController.getTask);
+
+//get task by id router
+
+TaskRouters.get("/getTaskById/:id",auth,taskController.getTaskById);
+
+//update task
+
+TaskRouters.put("/updateTask/:id",auth,taskController.updateTask);
+
+
+//delete task
+
+TaskRouters.delete("/deleteTask/:id",auth,taskController.deleteTask);

@@ -5,7 +5,7 @@ import * as subTaskController from "../controller/subtaskController.js";
 
 
 //create sub task router
-subTaskRouters.post("/createsubtask",auth,subTaskController.createSubtask);
+subTaskRouters.post("/createSubTask",auth,subTaskController.createSubtask);
 
 //get sub task router
-subTaskRouters.get("/getsubtask",auth,subTaskController.getSubTask);
+subTaskRouters.get("/getSubTask",auth,subTaskController.getSubTask);

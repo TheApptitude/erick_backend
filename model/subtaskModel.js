@@ -3,20 +3,15 @@ import mongoose from "mongoose";
 const subtasksSchema=new mongoose.Schema({
 
 
-    title:{
+    subTaskTitle:{
         type:String,
         required:true
      },
     
-    description:{
+    subTaskDescription:{
         type:String,
         required:true
     },
-    
-    assignedUsers: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'users',
-    }],
 
     task: {
         type: mongoose.Schema.Types.ObjectId,

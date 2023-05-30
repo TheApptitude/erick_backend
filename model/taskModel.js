@@ -18,7 +18,7 @@ assignedUsers: [{
     ref: 'users',
 }],
 
-subtasks: [{
+subTasks: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'subtasks',
 }],

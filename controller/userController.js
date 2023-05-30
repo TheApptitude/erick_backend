@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import { config } from "dotenv";
 import { randomInt } from "crypto";
 import otpModel from "../model/otpModel.js";
-import { sendEmails } from "../utlis/sendEmail.js";
+import { sendEmails } from "../utils/sendEmail.js";
 config();
 //user register
 export const userRegister=async(req,res)=>{
@@ -30,10 +30,10 @@ export const userRegister=async(req,res)=>{
                 message:"provide password"
             })
          } 
-         const usercheck = await userModel.find({
+         const userCheck = await userModel.find({
            email:email
         })
-        if (usercheck.length != 0) {
+        if (userCheck.length != 0) {
             return res
                 .status(200)
                 .json({ message: "user email already exist", success: false });
@@ -52,9 +52,9 @@ export const userRegister=async(req,res)=>{
         // save user token
         user.userToken = token; 
         //save user
-        const saveuser=await user.save();
+        const saveUser=await user.save();
 
-        if(!saveuser){
+        if(!saveUser){
 
             return res.status(400).json({
                 success:false,
@@ -64,8 +64,8 @@ export const userRegister=async(req,res)=>{
     
         return res.status(200).json({
             success:true,
-            message:"user create succesfully",
-            data:saveuser
+            message:"user create successfully",
+            data:saveUser
         })
         
       } catch (error) {
@@ -110,7 +110,7 @@ export const userLogin = async (req, res) => {
     }
 
     const token = jwt.sign({ user_id: user._id }, process.env.SECRET_KEY, {
-      expiresIn: "7d",
+      expiresIn: "1d",
     });
 
     user.userToken = token;
@@ -170,12 +170,12 @@ try {
   user.otpEmail=otp;
   await user.save();
 
-  sendEmails(user.email, "code sent succesfully", `<h5>Your code is ${OTP}</h5>`);
+  sendEmails(user.email, "code sent successfully", `<h5>Your code is ${OTP}</h5>`);
   // console.log(user.email);
 // console.log(sendEmails());
   return res.status(200).json({
     success:true,
-    message:"code sent succesfully",
+    message:"code sent successfully",
     data:OTP
   })
 
@@ -237,7 +237,7 @@ export const verifyOtp = async (req, res) => {
 
     // Generate token
     const token = jwt.sign({ user_id: user._id }, process.env.SECRET_KEY, {
-      expiresIn: "7d",
+      expiresIn: "1d",
     });
 
     user.userToken = token;
