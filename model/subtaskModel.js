@@ -24,10 +24,10 @@ const subtasksSchema=new mongoose.Schema({
         required: true,
       },
 
-    createdBy:{
+      createdBy:{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'users',
-    },
+    }
 
       
 

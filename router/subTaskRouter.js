@@ -9,3 +9,13 @@ subTaskRouters.post("/createSubTask",auth,subTaskController.createSubtask);
 
 //get sub task router
 subTaskRouters.get("/getSubTask",auth,subTaskController.getSubTask);
+
+
+//get sub task by id router
+subTaskRouters.get("/getSubTask/:id",auth,subTaskController.getSubTaskById);
+
+//update sub task router
+subTaskRouters.put("/updateSubTask/:id",auth,subTaskController.updateSubTask);
+
+//delete sub task router
+subTaskRouters.delete("/deleteSubTask/:id",auth,subTaskController.deleteSubTask);
