@@ -12,7 +12,6 @@ const otpSchema = new mongoose.Schema(
       otpUsed: {
         type: Boolean,
         default: false,
-        enum: [true, false],
       },
       expiresAt: {
         type: Date,

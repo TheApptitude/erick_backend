@@ -210,13 +210,21 @@ export const deleteSubTask = async (req, res) => {
         message: "Subtask ID not found",
       });
     }
-
+    console.log(existingSubTask);
     // Remove subtask ID from user model
-    await userModel.updateMany(
-      { _id: { $in: existingSubTask.assignedUsers } },
-      { $pull: { subtasks: id } }
-    );
-
+    // await userModel.updateMany(
+    //   { _id: { $in: existingSubTask.task } },
+    //   { $pull: { subtasks: id } },
+    // );
+    // await userModel.findByIdAndUpdate(
+    //   existingSubTask.task,
+    //   { $pull: { subtasks: id } }
+    // )
+// console.log(existingSubTask.task);
+await userModel.updateMany(
+  { tasks: existingSubTask.task },
+  { $pull: { subtasks: id } }
+);
     // Remove subtask ID from task model
     const task = await taskModel.findOneAndUpdate(
       { subTasks: id },

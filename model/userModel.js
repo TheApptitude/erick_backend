@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "otp",
   },
-  isVerified: {
+  otpVerified: {
     type: Boolean,
     default: false,
   },

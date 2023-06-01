@@ -246,7 +246,7 @@ export const verifyOtp = async (req, res) => {
     OTP.otpUsed = true;
     await OTP.save();
 
-    user.isVerified = true;
+    user.otpVerified = true;
     user.otpEmail = null;
     await user.save();
 

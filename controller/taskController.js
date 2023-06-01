@@ -119,7 +119,7 @@ export const getTaskById = async (req, res) => {
     const { user_id } = req.user;
     const { id } = req.params;
 
-    const foundTaskById = await taskModel.findOne({ _id: id, createdBy: user_id }).populate(["assignedUsers", "createdBy", "subtasks"]);
+    const foundTaskById = await taskModel.findOne({ _id: id, createdBy: user_id }).populate(["assignedUsers", "createdBy", "subTasks"]);
 
     if (!foundTaskById) {
       return res.status(400).json({
