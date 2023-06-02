@@ -4,6 +4,10 @@ import auth from "../middleware/auth.js";
 export const UserRouters = express.Router();
 
 
+
+
+
+
 //user register routes
 UserRouters.post("/userRegister", userController.userRegister);
 

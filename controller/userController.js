@@ -6,6 +6,7 @@ import { randomInt } from "crypto";
 import otpModel from "../model/otpModel.js";
 import { sendEmails } from "../utils/sendEmail.js";
 config();
+
 //user register
 export const userRegister=async(req,res)=>{
     try {
