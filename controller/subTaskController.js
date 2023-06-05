@@ -2,19 +2,14 @@ import subtaskModel from "../model/subtaskModel.js";
 import userModel from "../model/userModel.js";
 import taskModel from "../model/taskModel.js";
 
-
-
-
 //create subtask
-
-
-
 
 export const createSubtask = async (req, res) => {
   try {
     const { user_id } = req.user;
-    const { subTaskTitle, subTaskDescription, task, scheduledDateTime } = req.body;
-    console.log("userId:",user_id);
+    const { subTaskTitle, subTaskDescription, task, scheduledDateTime } =
+      req.body;
+    console.log("userId:", user_id);
 
     const existingTask = await taskModel.findOne({ _id: task });
 
@@ -50,7 +45,8 @@ export const createSubtask = async (req, res) => {
     if (!updateTask || !updateUsers) {
       return res.status(400).json({
         success: false,
-        message: "Failed to update the corresponding task or users with the subtask ID",
+        message:
+          "Failed to update the corresponding task or users with the subtask ID",
       });
     }
 
@@ -70,73 +66,43 @@ export const createSubtask = async (req, res) => {
   }
 };
 
-
-
-
-
 //get subtask
 
-export const getSubTask = async(req,res)=>{
-
-    try {
-      const {user_id}=req.user;
-        const subtask=await subtaskModel.find({createdBy:user_id})
-        .populate({
-          path: "task",
-          populate: {
-            path: "assignedUsers",
-          },
-        });
-        
-        
-
-        if(!subtask){
-            return res.status(400).json({
-                success:false,
-                message:"sub task not found"
-            })
-        }
-
-        return res.status(200).json({
-            success:true,
-            message:"sub task found successfully",
-            data:subtask
-        })
-    } catch (error) {
-        return res.status(500).json({
-          success: false,
-          message: "Internal server error",
-          error: error.message,
-        });
-      }
-
-};
-
-
-export const getSubTaskById=async(req,res)=>{
+export const getSubTask = async (req, res) => {
   try {
-    
-    const {user_id}=req.user;
-    const {id}=req.params;
+    const { user_id } = req.user;
+    // const subtask = await subtaskModel.find({ createdBy: user_id }).populate({
 
-    const foundSubTask=await subtaskModel.findOne({_id:id,createdBy:user_id}).populate(["task","createdBy"]);
-
-    if(!foundSubTask){
-
-      return res.status(400).json({
-        success:false,
-        message:"not found sub task"
+    //   path: "task",
+    //   populate: {
+    //     path: "assignedUsers",
+    //   },
+    // });
+    const subtask = await subtaskModel.find({ createdBy: user_id })
+      .populate({
+        path: "task",
+        populate: {
+          path: "assignedUsers",
+        },
       })
+      .populate({
+        path: "task",
+        populate: {
+          path: "createdBy",
+        },
+      })
+    if (!subtask) {
+      return res.status(400).json({
+        success: false,
+        message: "sub task not found",
+      });
     }
 
-
     return res.status(200).json({
-      success:true,
-      message:"found subtask successfully",
-      data:foundSubTask
-    })
-
-
+      success: true,
+      message: "sub task found successfully",
+      data: subtask,
+    });
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -144,24 +110,79 @@ export const getSubTaskById=async(req,res)=>{
       error: error.message,
     });
   }
-}
+};
+
+
+export const getSubTaskById = async (req, res) => {
+  try {
+    const { user_id } = req.user;
+    const { id } = req.params;
+
+    const foundSubTask = await subtaskModel
+      .findOne({ _id: id, createdBy: user_id })
+      .populate({
+        path: "task",
+        populate: {
+          path: "assignedUsers",
+        },
+      })
+      .populate({
+        path: "task",
+        populate: {
+          path: "createdBy",
+        },
+      })
+
+    if (!foundSubTask) {
+      return res.status(400).json({
+        success: false,
+        message: "not found sub task",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "found subtask successfully",
+      data: foundSubTask,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
 
 
 export const updateSubTask = async (req, res) => {
   try {
     const { user_id } = req.user;
     const { id } = req.params;
-    const { subTaskTitle, subTaskDescription, task, scheduledDateTime } = req.body;
+    const { subTaskTitle, subTaskDescription, task, scheduledDateTime } =
+      req.body;
 
-    // Check if the sub task ID exists
-    const existingTask = await subtaskModel.findOne({_id:id});
+    // Check if the sub task ID exists or not
+    const existingSubTask = await subtaskModel.findOne({ _id: id });
 
-    if (!existingTask) {
+    if (!existingSubTask) {
       return res.status(400).json({
         success: false,
-        message: "Task ID not found",
+        message: "Sub Task ID not found",
       });
     }
+
+    //check if the task ID exist or not
+
+    const existingTask=await taskModel.findOne({_id:task});
+
+    if(!existingTask){
+      return res.status(400).json({
+        success:false,
+        message:"Task Id not found"
+      })
+    }
+
 
     const update = await subtaskModel.findByIdAndUpdate(
       id,
@@ -196,6 +217,7 @@ export const updateSubTask = async (req, res) => {
   }
 };
 
+
 export const deleteSubTask = async (req, res) => {
   try {
     const { user_id } = req.user;
@@ -220,11 +242,11 @@ export const deleteSubTask = async (req, res) => {
     //   existingSubTask.task,
     //   { $pull: { subtasks: id } }
     // )
-// console.log(existingSubTask.task);
-await userModel.updateMany(
-  { tasks: existingSubTask.task },
-  { $pull: { subtasks: id } }
-);
+    // console.log(existingSubTask.task);
+    await userModel.updateMany(
+      { tasks: existingSubTask.task },
+      { $pull: { subtasks: id } }
+    );
     // Remove subtask ID from task model
     const task = await taskModel.findOneAndUpdate(
       { subTasks: id },
@@ -262,6 +284,3 @@ await userModel.updateMany(
     });
   }
 };
-
-
-

@@ -1,5 +1,3 @@
-
-
 import jwt from "jsonwebtoken";
 import { config } from "dotenv";
 config();
@@ -38,4 +36,3 @@ const verifyToken = async (req, res, next) => {
 };
 
 export default verifyToken;
-

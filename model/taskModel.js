@@ -1,33 +1,34 @@
 import mongoose from "mongoose";
 
+const taskSchema = new mongoose.Schema({
+  title: {
+    type: String,
+    required: true,
+  },
 
-const taskSchema=new mongoose.Schema({
+  description: {
+    type: String,
+    required: true,
+  },
 
+  assignedUsers: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "users",
+    },
+  ],
 
-title:{
-    type:String,
-    required:true
-},
+  subTasks: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "subtasks",
+    },
+  ],
 
-description:{
-    type:String,
-    required:true
-},
-
-assignedUsers: [{
+  createdBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'users',
-}],
-
-subTasks: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'subtasks',
-}],
-
-createdBy:{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'users',
-},
+    ref: "users",
+  },
 
   day: {
     type: String,
@@ -38,12 +39,8 @@ createdBy:{
     type: Date,
     required: true,
   },
+});
 
-  
-},
-
-)
-
-const taskModel=mongoose.model("tasks",taskSchema);
+const taskModel = mongoose.model("tasks", taskSchema);
 
 export default taskModel;

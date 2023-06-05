@@ -5,75 +5,75 @@ import { config } from "dotenv";
 import { randomInt } from "crypto";
 import otpModel from "../model/otpModel.js";
 import { sendEmails } from "../utils/sendEmail.js";
+import { handleMultipartData } from "../utils/multiPartData.js";
 config();
 
 //user register
-export const userRegister=async(req,res)=>{
-    try {
-        const { name, email, password } = req.body;
-        
+export const userRegister = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
 
-         if(!name){
-            return res.status(400).json({
-                success:false,
-                message:"provide name"
-            })
-         }            
-         if(!email){
-            return res.status(400).json({
-                success:false,
-                message:"provide email"
-            })
-         } 
-         if(!password){
-            return res.status(400).json({
-                success:false,
-                message:"provide password"
-            })
-         } 
-         const userCheck = await userModel.find({
-           email:email
-        })
-        if (userCheck.length != 0) {
-            return res
-                .status(200)
-                .json({ message: "user email already exist", success: false });
-        }
+    if (!name) {
+      return res.status(400).json({
+        success: false,
+        message: "provide name",
+      });
+    }
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "provide email",
+      });
+    }
+    if (!password) {
+      return res.status(400).json({
+        success: false,
+        message: "provide password",
+      });
+    }
+    const userCheck = await userModel.find({
+      email: email,
+    });
+    if (userCheck.length != 0) {
+      return res
+        .status(200)
+        .json({ message: "user email already exist", success: false });
+    }
 
-         //create user
-        const user=new userModel({
-        name,
-        email,
-        password:bcrypt.hashSync(password,10)
-        });
+    //create user
+    const user = new userModel({
+      name,
+      email,
+      password: bcrypt.hashSync(password, 10),
+    });
 
-        const token = jwt.sign({ user_id: user._id }, process.env.SECRET_KEY, {
-            expiresIn: "1d",
-        });
-        // save user token
-        user.userToken = token; 
-        //save user
-        const saveUser=await user.save();
+    const token = jwt.sign({ user_id: user._id }, process.env.SECRET_KEY, {
+      expiresIn: "1d",
+    });
+    // save user token
+    user.userToken = token;
+    //save user
+    const saveUser = await user.save();
 
-        if(!saveUser){
+    if (!saveUser) {
+      return res.status(400).json({
+        success: false,
+        message: "user not create",
+      });
+    }
 
-            return res.status(400).json({
-                success:false,
-                message:"user not create"
-            })
-        }
-    
-        return res.status(200).json({
-            success:true,
-            message:"user create successfully",
-            data:saveUser
-        })
-        
-      } catch (error) {
-        // Handle any errors that occur during registration
-        console.error(error);
-        return res.status(500).json({ success: false, message: 'Internal server error' });
-      }
+    return res.status(200).json({
+      success: true,
+      message: "user create successfully",
+      data: saveUser,
+    });
+  } catch (error) {
+    // Handle any errors that occur during registration
+    console.error(error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
+  }
 };
 
 //user login
@@ -96,8 +96,8 @@ export const userLogin = async (req, res) => {
     }
 
     const user = await userModel.findOne({ email: email });
-    
-    if(!user){
+
+    if (!user) {
       return res.status(401).json({
         success: false,
         message: "email not found",
@@ -132,70 +132,67 @@ export const userLogin = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ success: false, message: "Internal server error" });
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
   }
 };
-
 
 //forget password
-export const forgetPassword=async(req,res)=>{
+export const forgetPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
 
-try {
-  const {email}=req.body;
+    const user = await userModel.findOne({ email: email });
 
-  const user=await userModel.findOne({email:email});
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "user not found",
+      });
+    }
 
-  if(!user){
-    return res.status(400).json({
-      success:false,
-      message:"user not found"
-    })
+    const OTP = randomInt(10000, 99999);
+
+    //store otp in db
+
+    const otp = await otpModel.create({
+      user: user._id,
+      createdAt: new Date(),
+      otpKey: OTP,
+      expireAt: new Date(new Date().getTime() + 60 * 60 * 1000),
+    });
+    //set otp in user detail
+
+    user.otpEmail = otp;
+    await user.save();
+
+    sendEmails(
+      user.email,
+      "code sent successfully",
+      `<h5>Your code is ${OTP}</h5>`
+    );
+    // console.log(user.email);
+    // console.log(sendEmails());
+    return res.status(200).json({
+      success: true,
+      message: "code sent successfully",
+      data: OTP,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
-
-
-  const OTP=randomInt(10000,99999);
-
-
-  //store otp in db
-
-
-  const otp=await otpModel.create({
-
-    user:user._id,
-    createdAt:new Date(),
-    otpKey:OTP,
-    expireAt: new Date(new Date().getTime() + 60 * 60 * 1000),
-  })
-      //set otp in user detail
-
-  user.otpEmail=otp;
-  await user.save();
-
-  sendEmails(user.email, "code sent successfully", `<h5>Your code is ${OTP}</h5>`);
-  // console.log(user.email);
-// console.log(sendEmails());
-  return res.status(200).json({
-    success:true,
-    message:"code sent successfully",
-    data:OTP
-  })
-
-} catch (error) {
-  
-  return res.status(500).json({
-    success:false,
-    message:"Internal server error"
-  })
-}
 };
-
 
 //verify otp
 export const verifyOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
 
-    const user = await userModel.findOne({ email }).populate('otpEmail');
+    const user = await userModel.findOne({ email }).populate("otpEmail");
 
     if (!user) {
       return res.status(400).json({
@@ -267,43 +264,95 @@ export const verifyOtp = async (req, res) => {
   }
 };
 
-
 //reset password
-export const resetPassword=async(req,res)=>{
- try {
-  
-    const {password}=req.body;
+export const resetPassword = async (req, res) => {
+  try {
+    const { password } = req.body;
     const { user_id } = req.user;
     console.log("User ID:", user_id);
-    console.log("password:",password);
-    const userResetPassword=await userModel.findByIdAndUpdate(
+    console.log("password:", password);
+    const userResetPassword = await userModel.findByIdAndUpdate(
       user_id,
-     {
-      password: bcrypt.hashSync(password,10)
-     },
-     {new:true}
+      {
+        password: bcrypt.hashSync(password, 10),
+      },
+      { new: true }
     );
-console.log(userResetPassword);
-    if(!userResetPassword){
+    console.log(userResetPassword);
+    if (!userResetPassword) {
       return res.status(400).json({
-        success:false,
-        message:"password not reset"
-      })
+        success: false,
+        message: "password not reset",
+      });
     }
 
     return res.status(200).json({
-      success:true,
-      message:"password reset successfully",
-      data:userResetPassword
-    })
-
-
- } catch (error) {
-  return res.status(500).json({
-    success: false,
-    message: "Internal server error",
-  });
- } 
+      success: true,
+      message: "password reset successfully",
+      data: userResetPassword,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
 };
 
 
+export const updateImage =[
+
+  handleMultipartData.fields([
+      {
+        name: "image",
+        maxCount: 1,
+      },
+    ]),
+
+async (req, res) => {
+  try {
+    const { user_id } = req.user;
+    const {files}=req; 
+    const filesArray = (filesObj, type) => {
+      if (!filesObj[type].length) {
+        return "";
+      }
+      const file = filesObj[type][0]; // Get the first file from the array
+      const imagePath = file.path.replace(/\\/g, '/').replace('public/', '');
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      console.log(baseUrl);
+      const fullImagePath = `${baseUrl}/${imagePath}`;
+      return fullImagePath;
+      
+    };
+    const imageUpdate = await userModel.findByIdAndUpdate(
+      user_id,
+      {
+        image:
+        files && files["image"]
+            ? filesArray(files, "image")
+            : "",
+      },
+      { new: true }
+    );
+
+    if (!imageUpdate) {
+      return res.status(400).json({
+        success: false,
+        message: "Image not updated",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Image updated successfully",
+      data: imageUpdate,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+}];

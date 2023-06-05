@@ -1,92 +1,86 @@
 import subtaskModel from "../model/subtaskModel.js";
-import taskModel from "../model/taskModel.js"
+import taskModel from "../model/taskModel.js";
 import userModel from "../model/userModel.js";
-
 
 //create task
 
-
 export const createTask = async (req, res) => {
-    try {
-      const {user_id}=req.user;
-      const { title, description, assignedUsers, scheduledDateTime,day } = req.body;
-        console.log("userId:",user_id);
-      
-      const existingTasks = await taskModel.find({
-        assignedUsers: { $in: assignedUsers },
-        scheduledDateTime: scheduledDateTime,
-        day:day
-      });
-  
-      if (existingTasks.length > 0) {
-        return res.status(400).json({
-          success: false,
-          message: "User is already assigned to a task at the same time",
-        });
-      }
+  try {
+    const { user_id } = req.user;
+    const { title, description, assignedUsers, scheduledDateTime, day } =
+      req.body;
+    console.log("userId:", user_id);
 
-            // Check if assignedUsers is empty or not provided
-      if (!assignedUsers || assignedUsers.length === 0) {
-        return res.status(400).json({
-          success: false,
-          message: "At least one user ID must be provided to create a task",
-        });
-      }
-  
-      // Validate assignedUsers
-      const validUsers = await userModel.find({ _id: { $in: assignedUsers } });
-  
-      if (validUsers.length !== assignedUsers.length) {
-        return res.status(400).json({
-          success: false,
-          message: "One or more invalid user IDs were provided",
-        });
-      }
-  
-// Create the task
-const createdTask = new taskModel({
-  title,
-  description,
-  assignedUsers,
-  day,
-  createdBy: user_id,
-  scheduledDateTime,
-});
+    const existingTasks = await taskModel.find({
+      assignedUsers: { $in: assignedUsers },
+      scheduledDateTime: scheduledDateTime,
+      day: day,
+    });
 
-const saveTask=await createdTask.save();
-
-  
-      // Update user models of assigned users with the task ID
-      const updateTasksInUsers = await userModel.updateMany(
-        { _id: { $in: assignedUsers } },
-        { $push: { tasks: saveTask._id } }
-      );
-
-  
-
-      return res.status(200).json({
-        success: true,
-        message: "Task created successfully and assigned to the task",
-        data:saveTask
-      });
-    } catch (error) {
-      return res.status(500).json({
+    if (existingTasks.length > 0) {
+      return res.status(400).json({
         success: false,
-        message: "Internal server error",
-        error: error.message
+        message: "User is already assigned to a task at the same time",
       });
     }
-  };
 
+    // Check if assignedUsers is empty or not provided
+    if (!assignedUsers || assignedUsers.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "At least one user ID must be provided to create a task",
+      });
+    }
 
+    // Validate assignedUsers
+    const validUsers = await userModel.find({ _id: { $in: assignedUsers } });
 
-  
-  
+    if (validUsers.length !== assignedUsers.length) {
+      return res.status(400).json({
+        success: false,
+        message: "One or more invalid user IDs were provided",
+      });
+    }
+
+    // Create the task
+    const createdTask = new taskModel({
+      title,
+      description,
+      assignedUsers,
+      day,
+      createdBy: user_id,
+      scheduledDateTime,
+    });
+
+    const saveTask = await createdTask.save();
+
+    // Update user models of assigned users with the task ID
+    const updateTasksInUsers = await userModel.updateMany(
+      { _id: { $in: assignedUsers } },
+      { $push: { tasks: saveTask._id } }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Task created successfully and assigned to the task",
+      data: saveTask,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
 //get task
 export const getTask = async (req, res) => {
   try {
     const { user_id } = req.user;
-    const foundTasks = await taskModel.find({ createdBy: user_id }).populate(["assignedUsers", "createdBy", "subTasks"]);
+    const foundTasks = await taskModel
+      .find({ createdBy: user_id })
+      .populate(["assignedUsers", "createdBy", "subTasks"]);
 
     if (!foundTasks || foundTasks.length === 0) {
       return res.status(404).json({
@@ -108,18 +102,17 @@ export const getTask = async (req, res) => {
     });
   }
 };
- 
-
 
 //get task by id
-
 
 export const getTaskById = async (req, res) => {
   try {
     const { user_id } = req.user;
     const { id } = req.params;
 
-    const foundTaskById = await taskModel.findOne({ _id: id, createdBy: user_id }).populate(["assignedUsers", "createdBy", "subTasks"]);
+    const foundTaskById = await taskModel
+      .findOne({ _id: id, createdBy: user_id })
+      .populate(["assignedUsers", "createdBy", "subTasks"]);
 
     if (!foundTaskById) {
       return res.status(400).json({
@@ -142,18 +135,14 @@ export const getTaskById = async (req, res) => {
   }
 };
 
+//update task
 
-//update task 
-
-export const updateTask=async(req,res)=>{
- 
-  
+export const updateTask = async (req, res) => {
   try {
-  
-    const {id}=req.params;
-    const {user_id}=req.user;
-    const {title,description,assignedUsers,day,scheduledDateTime}=req.body;
-
+    const { id } = req.params;
+    const { user_id } = req.user;
+    const { title, description, assignedUsers, day, scheduledDateTime } =
+      req.body;
 
     // const existingTasks = await taskModel.find({
     //   assignedUsers: { $in: assignedUsers },
@@ -168,67 +157,82 @@ export const updateTask=async(req,res)=>{
     //   });
     // }
 
-       // Check if assignedUsers is empty or not provided
-       if (!assignedUsers || assignedUsers.length === 0) {
-        return res.status(400).json({
-          success: false,
-          message: "At least one user ID must be provided to create a task",
-        });
-      }
-  
-      // Validate assignedUsers
-      const validUsers = await userModel.find({ _id: { $in: assignedUsers } });
-  
-      if (validUsers.length !== assignedUsers.length) {
-        return res.status(400).json({
-          success: false,
-          message: "One or more invalid user IDs were provided",
-        });
-      }
-
-    const update=await taskModel.findByIdAndUpdate(id,{
-
-
-      title,
-      description,
-      assignedUsers,
-      day,
-      scheduledDateTime,
-      createdBy:user_id
-
-    },
-    {
-      new:true
-    })   
-     
-
-    if(!update){
+    //check task found or not
+    const findTask=await taskModel.findOne({_id:id});
+    if(!findTask || findTask.length===0){
       return res.status(400).json({
         success:false,
-        message:"task not update"
+        message:"id not found"
       })
+    }
+        // Check if assignedUsers is empty or not provided
+
+    if (!assignedUsers || assignedUsers.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "At least one user ID must be provided to create a task",
+      });
+    }
+
+    // Validate assignedUsers
+    const validUsers = await userModel.find({ _id: { $in: assignedUsers } });
+
+    if (validUsers.length !== assignedUsers.length) {
+      return res.status(400).json({
+        success: false,
+        message: "One or more invalid user IDs were provided",
+      });
+    }
+
+      // Remove task ID from previous assigned users
+      await userModel.updateMany(
+        { tasks: id },
+        { $pull: { tasks: id } }
+      )
+    const update = await taskModel.findByIdAndUpdate(
+      id,
+      {
+        title,
+        description,
+        assignedUsers,
+        day,
+        scheduledDateTime,
+        createdBy: user_id,
+      },
+      {
+        new: true,
+      }
+    );
+
+    
+    // Add the task ID to the assigned users in userModel
+    await userModel.updateMany(
+      { _id: { $in: assignedUsers } },
+      { $push: { tasks: id } }
+    );
+
+    if (!update) {
+      return res.status(400).json({
+        success: false,
+        message: "task not update",
+      });
     }
 
     return res.status(200).json({
-      success:true,
-      message:"task update successfully",
-      data:update
-    }) 
-
-  }
-  
-  catch (error) {
+      success: true,
+      message: "task update successfully",
+      data: update,
+    });
+  } catch (error) {
     return res.status(500).json({
       success: false,
       message: "Internal server error",
       error: error.message,
     });
   }
-}
-
+};
 
 //delete task
-
 
 export const deleteTask = async (req, res) => {
   try {
@@ -268,4 +272,3 @@ export const deleteTask = async (req, res) => {
     });
   }
 };
-
