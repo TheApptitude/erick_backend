@@ -11,6 +11,15 @@ export const createTask = async (req, res) => {
       req.body;
     console.log("userId:", user_id);
 
+    const findUser=await userModel.findOne({_id:user_id});
+
+    if(!findUser){
+      return res.status(400).json({
+        success: false,
+        message: "user not found",
+      });
+    }
+
     const existingTasks = await taskModel.find({
       assignedUsers: { $in: assignedUsers },
       scheduledDateTime: scheduledDateTime,
@@ -85,7 +94,7 @@ export const getTask = async (req, res) => {
     if (!foundTasks || foundTasks.length === 0) {
       return res.status(404).json({
         success: false,
-        message: "task id not found",
+        message: "user is not found",
       });
     }
 
@@ -110,16 +119,33 @@ export const getTaskById = async (req, res) => {
     const { user_id } = req.user;
     const { id } = req.params;
 
+    const findUser=await userModel.findOne({_id:user_id});
+
+    if(!findUser){
+      return res.status(400).json({
+        success: false,
+        message: "user not found",
+      });
+    }
+
+    const findTask=await taskModel.findOne({_id:id});
+
+    if(!findTask){
+      return res.status(400).json({
+        success: false,
+        message: "task id not found",
+      });
+    }
     const foundTaskById = await taskModel
       .findOne({ _id: id, createdBy: user_id })
       .populate(["assignedUsers", "createdBy", "subTasks"]);
 
-    if (!foundTaskById) {
-      return res.status(400).json({
-        success: false,
-        message: "Task ID not found",
-      });
-    }
+    // if (!foundTaskById) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "Task ID not found",
+    //   });
+    // }
 
     return res.status(200).json({
       success: true,
@@ -156,6 +182,17 @@ export const updateTask = async (req, res) => {
     //     message: "User is already assigned to a task at the same time",
     //   });
     // }
+    
+    //find user
+
+    const findUser=await userModel.findOne({_id:user_id});
+
+    if(!findUser){
+      return res.status(400).json({
+        success:false,
+        message:"user not found"
+      })
+    }
 
     //check task found or not
     const findTask=await taskModel.findOne({_id:id});
@@ -238,6 +275,19 @@ export const deleteTask = async (req, res) => {
   try {
     const { user_id } = req.user;
     const { id } = req.params;
+
+
+    //find user
+
+    const findUser=await userModel.findOne({_id:user_id});
+
+    if(!findUser){
+      return res.status(400).json({
+        success:false,
+        message:"user not found"
+      })
+    }
+
 
     const task = await taskModel.findOne({ _id: id, createdBy: user_id });
 

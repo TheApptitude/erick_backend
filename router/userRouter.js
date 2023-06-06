@@ -16,3 +16,7 @@ UserRouters.post("/verifyOtp", userController.verifyOtp);
 UserRouters.post("/resetPassword", auth, userController.resetPassword);
 
 UserRouters.put("/updateImage",auth,userController.updateImage);
+
+UserRouters.get("/getUserById/:id",auth,userController.getUserById);
+
+UserRouters.get("/getUser",auth,userController.getUser);

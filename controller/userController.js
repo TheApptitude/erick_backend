@@ -6,9 +6,8 @@ import { randomInt } from "crypto";
 import otpModel from "../model/otpModel.js";
 import { sendEmails } from "../utils/sendEmail.js";
 import { handleMultipartData } from "../utils/multiPartData.js";
-config();
 
-//user register
+
 export const userRegister = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -31,16 +30,20 @@ export const userRegister = async (req, res) => {
         message: "provide password",
       });
     }
-    const userCheck = await userModel.find({
-      email: email,
-    });
-    if (userCheck.length != 0) {
-      return res
-        .status(200)
-        .json({ message: "user email already exist", success: false });
+
+   
+    // Check if the user exists in the database
+    const userCheck = await userModel.find({ email: email });
+
+    if (userCheck.length !== 0) {
+    
+      return res.status(200).json({
+        message: "user email already exists",
+        success: false,
+      });
     }
 
-    //create user
+    // Create user
     const user = new userModel({
       name,
       email,
@@ -50,31 +53,36 @@ export const userRegister = async (req, res) => {
     const token = jwt.sign({ user_id: user._id }, process.env.SECRET_KEY, {
       expiresIn: "1d",
     });
-    // save user token
+
+    // Save user token
     user.userToken = token;
-    //save user
+
+    // Save user to the database
     const saveUser = await user.save();
 
     if (!saveUser) {
       return res.status(400).json({
         success: false,
-        message: "user not create",
+        message: "user not created",
       });
     }
 
+
+
     return res.status(200).json({
       success: true,
-      message: "user create successfully",
+      message: "user created successfully",
       data: saveUser,
     });
   } catch (error) {
     // Handle any errors that occur during registration
     console.error(error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal server error" });
+    return res.status(500).json({ success: false, message: "Internal server error",error:error.message });
   }
 };
+
+
+
 
 //user login
 export const userLogin = async (req, res) => {
@@ -100,13 +108,14 @@ export const userLogin = async (req, res) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: "email not found",
+        message: "Email not found",
       });
     }
+
     if (!bcrypt.compareSync(password, user.password)) {
       return res.status(401).json({
         success: false,
-        message: "Please enter correct password",
+        message: "Please enter the correct password",
       });
     }
 
@@ -117,69 +126,64 @@ export const userLogin = async (req, res) => {
     user.userToken = token;
     await user.save();
 
+    
+    const profile = { ...user._doc, userToken: token };
+
     // Return the response with user data and token
     return res.status(200).json({
       success: true,
       message: "Login successful",
-      data: {
-        user: {
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-          userToken: user.userToken,
-        },
-      },
+      data: profile
     });
   } catch (error) {
     console.error(error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal server error" });
+    return res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
+
+
+
+
 
 //forget password
 export const forgetPassword = async (req, res) => {
   try {
     const { email } = req.body;
 
-    const user = await userModel.findOne({ email: email });
+    const user = await userModel.findOne({ email: email }).populate('otpEmail');
 
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: "user not found",
+        message: "User not found",
       });
     }
 
     const OTP = randomInt(10000, 99999);
 
-    //store otp in db
-
-    const otp = await otpModel.create({
-      user: user._id,
-      createdAt: new Date(),
+    // Create a new OTP document
+    const newOTP = new otpModel({
       otpKey: OTP,
-      expireAt: new Date(new Date().getTime() + 60 * 60 * 1000),
+      otpUsed: false,
     });
-    //set otp in user detail
 
-    user.otpEmail = otp;
+    // Save the new OTP document
+    const savedOTP = await newOTP.save();
+
+    // Assign the OTP document reference to the user's otpEmail field
+    user.otpEmail = savedOTP._id;
     await user.save();
 
-    sendEmails(
-      user.email,
-      "code sent successfully",
-      `<h5>Your code is ${OTP}</h5>`
-    );
-    // console.log(user.email);
-    // console.log(sendEmails());
+    // Send the OTP to the user's email
+    sendEmails(user.email, "Code sent successfully", `<h5>Your code is ${OTP}</h5>`);
+
     return res.status(200).json({
       success: true,
-      message: "code sent successfully",
-      data: OTP,
+      message: "Code sent successfully",
+      data: OTP
     });
   } catch (error) {
+    console.error(error);
     return res.status(500).json({
       success: false,
       message: "Internal server error",
@@ -187,7 +191,9 @@ export const forgetPassword = async (req, res) => {
   }
 };
 
-//verify otp
+
+
+
 export const verifyOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -197,28 +203,28 @@ export const verifyOtp = async (req, res) => {
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: "user not found",
+        message: "User not found",
       });
     }
-    console.log(user);
+
     const OTP = user.otpEmail;
 
     if (!OTP) {
       return res.status(400).json({
         success: false,
-        message: "otp not found",
+        message: "OTP not found",
       });
     } else if (OTP.otpUsed) {
       return res.status(400).json({
         success: false,
-        message: "otp already used",
+        message: "OTP already used",
       });
     }
 
     if (OTP.otpKey !== otp) {
       return res.status(400).json({
         success: false,
-        message: "invalid otp",
+        message: "Invalid OTP",
       });
     }
 
@@ -229,7 +235,7 @@ export const verifyOtp = async (req, res) => {
     if (minutes > 60) {
       return res.status(400).json({
         success: false,
-        message: "otp expired",
+        message: "OTP expired",
       });
     }
 
@@ -252,7 +258,7 @@ export const verifyOtp = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "otp verified successfully",
+      message: "OTP verified successfully",
       data: profile,
     });
   } catch (error) {
@@ -264,13 +270,15 @@ export const verifyOtp = async (req, res) => {
   }
 };
 
+
+
+
 //reset password
 export const resetPassword = async (req, res) => {
   try {
     const { password } = req.body;
     const { user_id } = req.user;
-    console.log("User ID:", user_id);
-    console.log("password:", password);
+
     const userResetPassword = await userModel.findByIdAndUpdate(
       user_id,
       {
@@ -278,17 +286,17 @@ export const resetPassword = async (req, res) => {
       },
       { new: true }
     );
-    console.log(userResetPassword);
+
     if (!userResetPassword) {
       return res.status(400).json({
         success: false,
-        message: "password not reset",
+        message: "Password not reset",
       });
     }
 
     return res.status(200).json({
       success: true,
-      message: "password reset successfully",
+      message: "Password reset successfully",
       data: userResetPassword,
     });
   } catch (error) {
@@ -300,53 +308,78 @@ export const resetPassword = async (req, res) => {
 };
 
 
-export const updateImage =[
 
+//update image
+export const updateImage = [
   handleMultipartData.fields([
-      {
-        name: "image",
-        maxCount: 1,
-      },
-    ]),
+    {
+      name: "image",
+      maxCount: 1,
+    },
+  ]),
 
-async (req, res) => {
-  try {
-    const { user_id } = req.user;
-    const {files}=req; 
-    const filesArray = (filesObj, type) => {
-      if (!filesObj[type].length) {
-        return "";
+  async (req, res) => {
+    try {
+      const { user_id } = req.user;
+      const { files } = req;
+      const filesArray = (filesObj, type) => {
+        if (!filesObj[type].length) {
+          return "";
+        }
+        const file = filesObj[type][0]; // Get the first file from the array
+        const imagePath = file.path.replace(/\\/g, '/').replace('public/', '');
+        const baseUrl = `${req.protocol}://${req.get('host')}`;
+        const fullImagePath = `${baseUrl}/${imagePath}`;
+        return fullImagePath;
+      };
+
+      const user = await userModel.findById(user_id);
+
+      if (!user) {
+        return res.status(400).json({
+          success: false,
+          message: "User not found",
+        });
       }
-      const file = filesObj[type][0]; // Get the first file from the array
-      const imagePath = file.path.replace(/\\/g, '/').replace('public/', '');
-      const baseUrl = `${req.protocol}://${req.get('host')}`;
-      console.log(baseUrl);
-      const fullImagePath = `${baseUrl}/${imagePath}`;
-      return fullImagePath;
-      
-    };
-    const imageUpdate = await userModel.findByIdAndUpdate(
-      user_id,
-      {
-        image:
-        files && files["image"]
-            ? filesArray(files, "image")
-            : "",
-      },
-      { new: true }
-    );
 
-    if (!imageUpdate) {
-      return res.status(400).json({
+      // Update the image in the user document
+      user.image = files && files["image"]
+        ? filesArray(files, "image")
+        : "";
+
+      // Save the updated user document
+      const updatedUser = await user.save();
+
+      return res.status(200).json({
+        success: true,
+        message: "Image updated successfully",
+        data: updatedUser,
+      });
+    } catch (error) {
+      return res.status(500).json({
         success: false,
-        message: "Image not updated",
+        message: "Internal server error",
+        error: error.message,
       });
     }
+  },
+];
 
+
+
+export const getUser=async(req,res)=>{
+  try {
+    const getAllUser=await userModel.find();
+    if(!getAllUser){
+      return res.status(400).json({
+        success: false,
+        message: "user not found",
+      });
+    }
     return res.status(200).json({
       success: true,
-      message: "Image updated successfully",
-      data: imageUpdate,
+      message: "user found successfully",
+      data:getAllUser
     });
   } catch (error) {
     return res.status(500).json({
@@ -355,4 +388,30 @@ async (req, res) => {
       error: error.message,
     });
   }
-}];
+}
+
+
+export const getUserById=async(req,res)=>{
+  try {
+    const {id}=req.params;
+    const getUser=await userModel.findById(id);
+    if(!getUser){
+      return res.status(400).json({
+        success: false,
+        message: "user not found",
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: "user found successfully",
+      data:getUser
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+}
+

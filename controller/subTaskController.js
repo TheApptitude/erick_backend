@@ -11,6 +11,18 @@ export const createSubtask = async (req, res) => {
       req.body;
     console.log("userId:", user_id);
 
+    
+    //find user
+
+    const findUser=await userModel.findOne({_id:user_id});
+
+    if(!findUser){
+      return res.status(400).json({
+        success:false,
+        message:"user not found"
+      })
+    }
+
     const existingTask = await taskModel.findOne({ _id: task });
 
     if (!existingTask) {
@@ -78,6 +90,18 @@ export const getSubTask = async (req, res) => {
     //     path: "assignedUsers",
     //   },
     // });
+
+    
+    //find user
+
+    const findUser=await userModel.findOne({_id:user_id});
+
+    if(!findUser){
+      return res.status(400).json({
+        success:false,
+        message:"user not found"
+      })
+    }
     const subtask = await subtaskModel.find({ createdBy: user_id })
       .populate({
         path: "task",
@@ -117,6 +141,28 @@ export const getSubTaskById = async (req, res) => {
   try {
     const { user_id } = req.user;
     const { id } = req.params;
+
+    
+    //find user
+
+    const findUser=await userModel.findOne({_id:user_id});
+
+    if(!findUser){
+      return res.status(400).json({
+        success:false,
+        message:"user not found"
+      })
+    }
+    //find subtask
+
+    const findSubTask=await subtaskModel.findOne({_id:id});
+
+    if(!findSubTask){
+      return res.status(400).json({
+        success:false,
+        message:"subtask id not found"
+      })
+    }
 
     const foundSubTask = await subtaskModel
       .findOne({ _id: id, createdBy: user_id })
@@ -162,6 +208,17 @@ export const updateSubTask = async (req, res) => {
     const { subTaskTitle, subTaskDescription, task, scheduledDateTime } =
       req.body;
 
+      
+    //find user
+
+    const findUser=await userModel.findOne({_id:user_id});
+
+    if(!findUser){
+      return res.status(400).json({
+        success:false,
+        message:"user not found"
+      })
+    }
     // Check if the sub task ID exists or not
     const existingSubTask = await subtaskModel.findOne({ _id: id });
 
@@ -223,6 +280,16 @@ export const deleteSubTask = async (req, res) => {
     const { user_id } = req.user;
     const { id } = req.params;
 
+    //find user
+
+    const findUser=await userModel.findOne({_id:user_id});
+
+    if(!findUser){
+      return res.status(400).json({
+        success:false,
+        message:"user not found"
+      })
+    }
     // Check if the subtask ID exists
     const existingSubTask = await subtaskModel.findById(id);
 
