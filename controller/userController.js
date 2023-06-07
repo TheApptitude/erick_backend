@@ -237,7 +237,7 @@ export const verifyOtp = async (req, res) => {
     if (minutes > 60) {
       return res.status(400).json({
         success: false,
-        message: "OTP expired",
+        message: "OTP expire",
       });
     }
 
