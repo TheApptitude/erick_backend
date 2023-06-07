@@ -8,6 +8,8 @@ import { sendEmails } from "../utils/sendEmail.js";
 import { handleMultipartData } from "../utils/multiPartData.js";
 
 
+
+//user register
 export const userRegister = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -369,16 +371,28 @@ export const updateImage = [
 
 export const getUser=async(req,res)=>{
   try {
-    const getAllUser=await userModel.find();
+    const {user_id}=req.user;
+
+    const userFind=await userModel.findOne({_id:user_id});
+
+
+if(!userFind){
+  return res.status(400).json({
+    success: false,
+    message: "user not found",
+  });
+}
+
+    const getAllUser=await userModel.find({_id:{$ne:user_id}});
     if(!getAllUser){
       return res.status(400).json({
         success: false,
-        message: "user not found",
+        message: "users not found",
       });
     }
     return res.status(200).json({
       success: true,
-      message: "user found successfully",
+      message: "users found successfully",
       data:getAllUser
     });
   } catch (error) {
@@ -393,14 +407,28 @@ export const getUser=async(req,res)=>{
 
 export const getUserById=async(req,res)=>{
   try {
+      
+    const {user_id}=req.user;
     const {id}=req.params;
-    const getUser=await userModel.findById(id);
-    if(!getUser){
+
+    const userFind=await userModel.findOne({_id:user_id});
+
+    if(!userFind){
       return res.status(400).json({
         success: false,
         message: "user not found",
       });
     }
+
+    const getUser = await userModel.findOne({ _id: { $ne: user_id, $eq: id } });
+
+    if(!getUser){
+      return res.status(400).json({
+        success: false,
+        message: "you cannot found yourself",
+      });
+    }
+   
     return res.status(200).json({
       success: true,
       message: "user found successfully",

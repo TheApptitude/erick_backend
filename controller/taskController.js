@@ -199,7 +199,7 @@ export const updateTask = async (req, res) => {
     if(!findTask || findTask.length===0){
       return res.status(400).json({
         success:false,
-        message:"id not found"
+        message:"Task ID not found"
       })
     }
         // Check if assignedUsers is empty or not provided
@@ -308,6 +308,17 @@ export const deleteTask = async (req, res) => {
     await userModel.updateMany(
       { _id: { $in: task.assignedUsers } },
       { $pull: { tasks: id } }
+    );
+    // Remove task ID from user model
+    // await userModel.updateMany(
+    //   { _id: { $in: task.assignedUsers } },
+    //   { $pull: { subtasks: id } }
+    // );
+
+    // Remove sub task ID associeted with task from user model
+    await userModel.updateMany(
+      { _id: { $in: task.assignedUsers } },
+      { $pull: { tasks: id, subtasks: { $in: task.subTasks } } }
     );
 
     return res.status(200).json({
