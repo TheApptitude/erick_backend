@@ -134,7 +134,7 @@ export const userLogin = async (req, res) => {
     // Return the response with user data and token
     return res.status(200).json({
       success: true,
-      message: "Login successful",
+      message: "User Login Successfully",
       data: profile
     });
   } catch (error) {
@@ -151,7 +151,6 @@ export const userLogin = async (req, res) => {
 export const forgetPassword = async (req, res) => {
   try {
     const { email } = req.body;
-
     const user = await userModel.findOne({ email: email }).populate('otpEmail');
 
     if (!user) {

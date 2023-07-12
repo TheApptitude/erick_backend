@@ -23,7 +23,7 @@ export const createTask = async (req, res) => {
     const existingTasks = await taskModel.find({
       assignedUsers: { $in: assignedUsers },
       scheduledDateTime: scheduledDateTime,
-      day: day,
+      // day: day,
     });
 
     if (existingTasks.length > 0) {
@@ -71,7 +71,7 @@ export const createTask = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Task created successfully and assigned to the task",
+      message: "Task created successfully and assigned to the user",
       data: saveTask,
     });
   } catch (error) {
@@ -87,6 +87,14 @@ export const createTask = async (req, res) => {
 export const getTask = async (req, res) => {
   try {
     const { user_id } = req.user;
+
+     const userfind=await userModel.findById(user_id);
+     if(!userfind){
+      return res.status(400).json({
+        success:false,
+        message:"user not found"
+      })
+     }
     const foundTasks = await taskModel
       .find({ createdBy: user_id })
       .populate(["assignedUsers", "createdBy", "subTasks"]);
